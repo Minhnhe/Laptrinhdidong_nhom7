@@ -13,7 +13,8 @@ import com.example.dack2026.data.entity.HoaDonEntity
 
 class HoaDonAdapter(
     private val onEditClick: (HoaDonEntity) -> Unit,
-    private val onDeleteClick: (HoaDonEntity) -> Unit
+    private val onDeleteClick: (HoaDonEntity) -> Unit,
+    private val onExportPdfClick: (HoaDonEntity) -> Unit
 ) : ListAdapter<HoaDonEntity, HoaDonAdapter.HoaDonViewHolder>(DIFF_CALLBACK) {
 
     class HoaDonViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -22,6 +23,7 @@ class HoaDonAdapter(
         val tvPhongInfo: TextView = view.findViewById(R.id.tvPhongInfo)
         val tvChiTiet: TextView = view.findViewById(R.id.tvChiTiet)
         val tvTongTien: TextView = view.findViewById(R.id.tvTongTien)
+        val btnExportPdf: Button = view.findViewById(R.id.btnExportPdf)
         val btnEdit: Button = view.findViewById(R.id.btnEdit)
         val btnDelete: Button = view.findViewById(R.id.btnDelete)
     }
@@ -38,9 +40,10 @@ class HoaDonAdapter(
         holder.tvPhongInfo.text = "Hóa đơn phòng #${item.phongId}"
         val dienUsage = (item.chiSoDienMoi - item.chiSoDienCu).coerceAtLeast(0)
         val nuocUsage = (item.chiSoNuocMoi - item.chiSoNuocCu).coerceAtLeast(0)
-        holder.tvChiTiet.text = "Điện: ${dienUsage} kWh - Nước: ${nuocUsage} m³ - Phòng: ${item.tienPhong.toInt()} đ"
+        holder.tvChiTiet.text = "Điện: ${dienUsage}kWh | Nước: ${nuocUsage}m³\nPhòng: ${item.tienPhong.toInt()} | Wifi: ${item.tienWifi.toInt()} | Rác: ${item.tienRac.toInt()}"
         holder.tvTongTien.text = "Tổng tiền: ${item.tongTien.toInt()} đ"
 
+        holder.btnExportPdf.setOnClickListener { onExportPdfClick(item) }
         holder.btnEdit.setOnClickListener { onEditClick(item) }
         holder.btnDelete.setOnClickListener { onDeleteClick(item) }
     }

@@ -71,4 +71,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+
+    // Coil for VietQR Image Loading
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

@@ -78,6 +78,16 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/btnExportPdf"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#388E3C"
+                android:text="Xuất PDF"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <Button
                 android:id="@+id/btnEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"

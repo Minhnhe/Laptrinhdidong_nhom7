@@ -1,5 +1,6 @@
 package com.example.dack2026.ui.activity
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -56,7 +57,17 @@ class LoginActivity : ComponentActivity() {
             ) {
                 LoginScreen(
                     authViewModel = authViewModel,
-                    onLoginSuccess = { user ->
+                    onLoginSuccess = { user, savedUser, savedPass, rememberMe ->
+                        val sharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
+                        if (rememberMe) {
+                            sharedPreferences.edit()
+                                .putBoolean("remember_me", true)
+                                .putString("saved_username", savedUser)
+                                .putString("saved_password", savedPass)
+                                .apply()
+                        } else {
+                            sharedPreferences.edit().clear().apply()
+                        }
                         UserSessionManager.saveUserSession(this, user)
                         Toast.makeText(this, "Đăng nhập thành công (${user.fullName})", Toast.LENGTH_SHORT).show()
                         routeToRoleDashboard(user)
@@ -88,15 +99,19 @@ class LoginActivity : ComponentActivity() {
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
-    onLoginSuccess: (UserEntity) -> Unit,
+    onLoginSuccess: (UserEntity, String, String, Boolean) -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE) }
+
+    var rememberMe by remember { mutableStateOf(sharedPreferences.getBoolean("remember_me", false)) }
+    var username by remember { mutableStateOf(if (rememberMe) sharedPreferences.getString("saved_username", "") ?: "" else "") }
+    var password by remember { mutableStateOf(if (rememberMe) sharedPreferences.getString("saved_password", "") ?: "" else "") }
+
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val loginResult by authViewModel.loginResult.observeAsState()
@@ -108,7 +123,7 @@ fun LoginScreen(
             val user = loginResult
             if (user != null) {
                 authViewModel.resetState()
-                onLoginSuccess(user)
+                onLoginSuccess(user, username, password, rememberMe)
             } else {
                 Toast.makeText(context, "Sai tên đăng nhập hoặc mật khẩu! Vui lòng thử lại.", Toast.LENGTH_LONG).show()
                 authViewModel.resetState()
@@ -241,9 +256,31 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // 4. Green Pill Button: Đăng nhập
+            // 4. Checkbox: Nhớ mật khẩu
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = rememberMe,
+                    onCheckedChange = { rememberMe = it },
+                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF66BB6A))
+                )
+                Text(
+                    text = "Nhớ mật khẩu",
+                    fontSize = 14.sp,
+                    color = Color(0xFF424242),
+                    modifier = Modifier.clickable { rememberMe = !rememberMe }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 5. Green Pill Button: Đăng nhập
             Button(
                 onClick = handleLoginSubmit,
                 modifier = Modifier
@@ -261,7 +298,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 5. Blue Text Link: Quên mật khẩu?
+            // 6. Blue Text Link: Quên mật khẩu?
             Text(
                 text = "Quên mật khẩu?",
                 fontSize = 14.sp,
@@ -274,7 +311,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. Grey Pill Button: Đăng kí tài khoản
+            // 7. Grey Pill Button: Đăng kí tài khoản
             Button(
                 onClick = onRegisterClick,
                 modifier = Modifier

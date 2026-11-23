@@ -45,7 +45,8 @@ class HoaDonActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = HoaDonAdapter(
             onEditClick = { hoaDon -> showAddEditDialog(hoaDon) },
-            onDeleteClick = { hoaDon -> confirmDelete(hoaDon) }
+            onDeleteClick = { hoaDon -> confirmDelete(hoaDon) },
+            onExportPdfClick = { hoaDon -> exportHoaDonToPdf(hoaDon) }
         )
         recyclerView.adapter = adapter
 
@@ -87,7 +88,8 @@ class HoaDonActivity : AppCompatActivity() {
         val etChiSoNuocMoi = dialogView.findViewById<EditText>(R.id.etChiSoNuocMoi)
         val etDonGiaNuoc = dialogView.findViewById<EditText>(R.id.etDonGiaNuoc)
         val etTienPhong = dialogView.findViewById<EditText>(R.id.etTienPhong)
-        val etTienDichVu = dialogView.findViewById<EditText>(R.id.etTienDichVu)
+        val etTienWifi = dialogView.findViewById<EditText>(R.id.etTienWifi)
+        val etTienRac = dialogView.findViewById<EditText>(R.id.etTienRac)
         val etTrangThai = dialogView.findViewById<EditText>(R.id.etTrangThai)
 
         val phongNames = phongList.map { it.tenPhong }
@@ -104,7 +106,8 @@ class HoaDonActivity : AppCompatActivity() {
             etChiSoNuocMoi.setText(hoaDon.chiSoNuocMoi.toString())
             etDonGiaNuoc.setText(hoaDon.donGiaNuoc.toString())
             etTienPhong.setText(hoaDon.tienPhong.toString())
-            etTienDichVu.setText(hoaDon.tienDichVu.toString())
+            etTienWifi.setText(hoaDon.tienWifi.toString())
+            etTienRac.setText(hoaDon.tienRac.toString())
             etTrangThai.setText(hoaDon.trangThai)
 
             val index = phongList.indexOfFirst { it.id == hoaDon.phongId }
@@ -118,7 +121,8 @@ class HoaDonActivity : AppCompatActivity() {
             etChiSoNuocMoi.setText("10")
             etDonGiaNuoc.setText("10000")
             etTienPhong.setText(phongList[0].giaThue.toString())
-            etTienDichVu.setText("100000")
+            etTienWifi.setText("50000")
+            etTienRac.setText("30000")
             etTrangThai.setText("Chưa thanh toán")
         }
 
@@ -146,12 +150,13 @@ class HoaDonActivity : AppCompatActivity() {
                 val donGiaNuoc = etDonGiaNuoc.text.toString().toDoubleOrNull() ?: 10000.0
 
                 val tienPhong = etTienPhong.text.toString().toDoubleOrNull() ?: selectedPhong.giaThue
-                val tienDichVu = etTienDichVu.text.toString().toDoubleOrNull() ?: 0.0
+                val tienWifi = etTienWifi.text.toString().toDoubleOrNull() ?: 50000.0
+                val tienRac = etTienRac.text.toString().toDoubleOrNull() ?: 30000.0
                 val trangThai = etTrangThai.text.toString().trim().ifEmpty { "Chưa thanh toán" }
 
                 val tienDien = (dienMoi - dienCu) * donGiaDien
                 val tienNuoc = (nuocMoi - nuocCu) * donGiaNuoc
-                val tongTien = tienDien + tienNuoc + tienPhong + tienDichVu
+                val tongTien = tienDien + tienNuoc + tienPhong + tienWifi + tienRac
 
                 val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 val ngayTao = dateFormat.format(Date())
@@ -167,7 +172,8 @@ class HoaDonActivity : AppCompatActivity() {
                         chiSoNuocMoi = nuocMoi,
                         donGiaNuoc = donGiaNuoc,
                         tienPhong = tienPhong,
-                        tienDichVu = tienDichVu,
+                        tienWifi = tienWifi,
+                        tienRac = tienRac,
                         tongTien = tongTien,
                         trangThai = trangThai,
                         ngayTao = ngayTao
@@ -185,7 +191,8 @@ class HoaDonActivity : AppCompatActivity() {
                         chiSoNuocMoi = nuocMoi,
                         donGiaNuoc = donGiaNuoc,
                         tienPhong = tienPhong,
-                        tienDichVu = tienDichVu,
+                        tienWifi = tienWifi,
+                        tienRac = tienRac,
                         tongTien = tongTien,
                         trangThai = trangThai
                     )
@@ -207,5 +214,71 @@ class HoaDonActivity : AppCompatActivity() {
             }
             .setNegativeButton("Hủy", null)
             .show()
+    }
+
+    private fun exportHoaDonToPdf(hoaDon: HoaDonEntity) {
+        val pdfDocument = android.graphics.pdf.PdfDocument()
+        val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+        val paint = android.graphics.Paint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 14f
+        }
+        val titlePaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 20f
+            isFakeBoldText = true
+        }
+
+        var y = 50f
+        canvas.drawText("HÓA ĐƠN TIỀN NHÀ TRỌ", 180f, y, titlePaint)
+        y += 40f
+        paint.textSize = 14f
+        canvas.drawText("Tháng/Năm: ${hoaDon.thangNam}", 50f, y, paint)
+        y += 30f
+        canvas.drawText("Mã Phòng: ${hoaDon.phongId}", 50f, y, paint)
+        y += 30f
+        canvas.drawText("Ngày tạo: ${hoaDon.ngayTao}", 50f, y, paint)
+        y += 40f
+
+        canvas.drawText("----------------------------------------------------------------", 50f, y, paint)
+        y += 30f
+
+        val dienUsage = (hoaDon.chiSoDienMoi - hoaDon.chiSoDienCu).coerceAtLeast(0)
+        val nuocUsage = (hoaDon.chiSoNuocMoi - hoaDon.chiSoNuocCu).coerceAtLeast(0)
+        val tienDien = dienUsage * hoaDon.donGiaDien
+        val tienNuoc = nuocUsage * hoaDon.donGiaNuoc
+
+        canvas.drawText("1. Tiền phòng: ${hoaDon.tienPhong.toInt()} đ", 50f, y, paint)
+        y += 25f
+        canvas.drawText("2. Tiền điện ($dienUsage kWh x ${hoaDon.donGiaDien}): ${tienDien.toInt()} đ", 50f, y, paint)
+        y += 25f
+        canvas.drawText("3. Tiền nước ($nuocUsage m³ x ${hoaDon.donGiaNuoc}): ${tienNuoc.toInt()} đ", 50f, y, paint)
+        y += 25f
+        canvas.drawText("4. Tiền WiFi: ${hoaDon.tienWifi.toInt()} đ", 50f, y, paint)
+        y += 25f
+        canvas.drawText("5. Tiền rác: ${hoaDon.tienRac.toInt()} đ", 50f, y, paint)
+        y += 35f
+
+        canvas.drawText("----------------------------------------------------------------", 50f, y, paint)
+        y += 30f
+        val boldPaint = android.graphics.Paint(titlePaint).apply { textSize = 18f; color = android.graphics.Color.RED }
+        canvas.drawText("TỔNG TIỀN: ${hoaDon.tongTien.toInt()} đ", 50f, y, boldPaint)
+        y += 40f
+        canvas.drawText("Trạng thái: ${hoaDon.trangThai}", 50f, y, paint)
+
+        pdfDocument.finishPage(page)
+
+        val file = java.io.File(getExternalFilesDir(null), "HoaDon_${hoaDon.thangNam.replace("/", "_")}_Phong_${hoaDon.phongId}.pdf")
+        try {
+            pdfDocument.writeTo(java.io.FileOutputStream(file))
+            Toast.makeText(this, "Đã xuất PDF thành công!\nĐường dẫn: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Lỗi khi xuất PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+        } finally {
+            pdfDocument.close()
+        }
     }
 }

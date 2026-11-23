@@ -16,7 +16,9 @@ data class HoaDonEntity(
     val chiSoNuocMoi: Int,
     val donGiaNuoc: Double,
     val tienPhong: Double,
-    val tienDichVu: Double,
+    val tienWifi: Double = 50000.0,
+    val tienRac: Double = 30000.0,
+    val tienDichVu: Double = 0.0,
     val tongTien: Double,
     val trangThai: String, // "Chưa thanh toán", "Đã thanh toán"
     val ngayTao: String

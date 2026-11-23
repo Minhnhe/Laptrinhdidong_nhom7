@@ -23,6 +23,9 @@ interface KhachThueDao {
     @Query("SELECT * FROM khach_thue ORDER BY id DESC")
     fun getAllKhachThue(): LiveData<List<KhachThueEntity>>
 
+    @Query("SELECT * FROM khach_thue")
+    suspend fun getAllList(): List<KhachThueEntity>
+
     @Query("SELECT * FROM khach_thue WHERE phongId = :phongId ORDER BY id DESC")
     fun getKhachThueByPhong(phongId: Long): LiveData<List<KhachThueEntity>>
 

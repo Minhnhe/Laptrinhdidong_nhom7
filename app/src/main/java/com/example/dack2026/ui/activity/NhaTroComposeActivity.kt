@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import coil.compose.AsyncImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -548,9 +549,21 @@ fun TenantsScreen(navController: NavController) {
     }
 }
 
-// 3. QR Code Tab
+// 3. QR Code Tab (Quét & Tạo mã thanh toán chuyển khoản VietQR)
 @Composable
 fun QRCodeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("BankPrefs", android.content.Context.MODE_PRIVATE) }
+    
+    var bankName by remember { mutableStateOf(prefs.getString("bankName", "MB Bank") ?: "MB Bank") }
+    var accountNumber by remember { mutableStateOf(prefs.getString("accountNumber", "0987654321") ?: "0987654321") }
+    var accountHolder by remember { mutableStateOf(prefs.getString("accountHolder", "NGUYEN VAN CHU TRO") ?: "NGUYEN VAN CHU TRO") }
+    val amount by remember { mutableStateOf("2500000") }
+    val roomName by remember { mutableStateOf("Phòng 101") }
+
+    var showConfigDialog by remember { mutableStateOf(false) }
+    var showPaymentCard by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -560,21 +573,144 @@ fun QRCodeScreen(navController: NavController) {
     ) {
         Card(
             modifier = Modifier
-                .size(260.dp)
+                .fillMaxWidth(0.9f)
                 .shadow(8.dp, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.QrCode2, contentDescription = null, tint = Color(0xFF269900), modifier = Modifier.size(140.dp))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Quét mã thanh toán / phòng", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.QrCode2, contentDescription = null, tint = Color(0xFF269900), modifier = Modifier.size(36.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("QR Thanh Toán Tiền Trọ", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF269900))
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFE8F5E9), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Text("🏦 Ngân hàng: $bankName", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                        Text("💳 STK: $accountNumber", fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                        Text("👤 Chủ tài khoản: $accountHolder", fontSize = 13.sp, color = Color.DarkGray)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Phòng: $roomName", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Số tiền: ${amount.toDoubleOrNull()?.let { "%,.0f đ".format(it) } ?: amount}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC62828))
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Nội dung CK: Thanh toan $roomName",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("Sử dụng camera để quét mã QR thông tin phòng trọ hoặc chuyển khoản nhanh.", fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(horizontal = 32.dp))
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { showConfigDialog = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
+            modifier = Modifier.fillMaxWidth(0.9f).height(48.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Cấu Hình STK & Ngân Hàng Chủ Trọ", color = Color.White, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = { showPaymentCard = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF269900)),
+            modifier = Modifier.fillMaxWidth(0.9f).height(48.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = Color.White)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Hiển Thị Mã QR Chuyển Khoản Nhanh", color = Color.White, fontWeight = FontWeight.Bold)
+        }
+    }
+
+    if (showConfigDialog) {
+        var tempBank by remember { mutableStateOf(bankName) }
+        var tempAcc by remember { mutableStateOf(accountNumber) }
+        var tempHolder by remember { mutableStateOf(accountHolder) }
+
+        AlertDialog(
+            onDismissRequest = { showConfigDialog = false },
+            title = { Text("Cấu Hình Tài Khoản Chủ Trọ", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    OutlinedTextField(value = tempBank, onValueChange = { tempBank = it }, label = { Text("Tên Ngân Hàng (VD: MB, VCB, Techcombank)") })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = tempAcc, onValueChange = { tempAcc = it }, label = { Text("Số Tài Khoản (STK)") })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = tempHolder, onValueChange = { tempHolder = it }, label = { Text("Tên Chủ Tài Khoản (VIET HOA)") })
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        bankName = tempBank
+                        accountNumber = tempAcc
+                        accountHolder = tempHolder.uppercase()
+                        prefs.edit().putString("bankName", bankName).putString("accountNumber", accountNumber).putString("accountHolder", accountHolder).apply()
+                        showConfigDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF269900))
+                ) {
+                    Text("Lưu Lại", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfigDialog = false }) { Text("Hủy") }
+            }
+        )
+    }
+
+    if (showPaymentCard) {
+        val qrUrl = "https://img.vietqr.io/image/$bankName-$accountNumber-compact2.png?amount=$amount&addInfo=Thanh%20toan%20tien%20phong%20$roomName&accountName=$accountHolder"
+
+        AlertDialog(
+            onDismissRequest = { showPaymentCard = false },
+            title = { Text("Mã QR Thanh Toán VietQR", fontWeight = FontWeight.Bold, color = Color(0xFF269900)) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Khách thuê quét mã bằng app ngân hàng sẽ tự động điền số tiền và STK!", fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    coil.compose.AsyncImage(
+                        model = qrUrl,
+                        contentDescription = "VietQR Code",
+                        modifier = Modifier.size(240.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("STK: $accountNumber ($bankName)", fontWeight = FontWeight.Bold)
+                    Text("Chủ TK: $accountHolder", fontSize = 13.sp)
+                    Text("Số tiền: ${amount.toDoubleOrNull()?.let { "%,.0f đ".format(it) } ?: amount}", fontWeight = FontWeight.Bold, color = Color.Red, fontSize = 16.sp)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showPaymentCard = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF269900))
+                ) {
+                    Text("Đã Xác Nhận", color = Color.White)
+                }
+            }
+        )
     }
 }
 
