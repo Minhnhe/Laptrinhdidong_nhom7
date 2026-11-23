@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Chọn phòng:"
+        android:textColor="#424242"
+        android:textSize="14sp" />
+
+    <Spinner
+        android:id="@+id/spinnerPhong"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Chọn khách thuê:"
+        android:textColor="#424242"
+        android:textSize="14sp" />
+
+    <Spinner
+        android:id="@+id/spinnerKhachThue"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etNgayBatDau"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Ngày bắt đầu (DD/MM/YYYY)"
+        android:inputType="text"
+        android:maxLines="1" />
+
+    <EditText
+        android:id="@+id/etNgayKetThuc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Ngày kết thúc (DD/MM/YYYY)"
+        android:inputType="text"
+        android:maxLines="1" />
+
+    <EditText
+        android:id="@+id/etTienCoc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Tiền cọc (VNĐ)"
+        android:inputType="numberDecimal"
+        android:maxLines="1" />
+
+    <EditText
+        android:id="@+id/etGiaThue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Giá thuê (VNĐ)"
+        android:inputType="numberDecimal"
+        android:maxLines="1" />
+
+    <EditText
+        android:id="@+id/etTrangThai"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Trạng thái (Hiệu lực / Đã thanh lý)"
+        android:inputType="text"
+        android:maxLines="1" />
+
+</LinearLayout>
